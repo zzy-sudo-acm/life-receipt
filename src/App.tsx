@@ -20,7 +20,12 @@ export default function App(){
   useEffect(()=>()=>clearTimeout(timer.current),[]);
   useEffect(()=>{if(!userChanged.current || loaded.warning)return;try{writeSaved({history,draft:input,current:receipt});setWarning('');}catch{setWarning('本地保存失败（空间不足或存储被禁用）。当前小票仍可导出 PNG，刷新可能丢失。');}},[history,input,receipt,loaded.warning]);
   useEffect(()=>{if(!status)return;const id=setTimeout(()=>setStatus(''),4000);return()=>clearTimeout(id);},[status]);
-  const scrollToReceipt=()=>{if(!window.matchMedia('(max-width: 760px)').matches)return;outputRef.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});};
+  const scrollToReceipt=()=>{if(!window.matchMedia('(max-width: 760px)').matches)return;const el=outputRef.current;if(!el)return;
+    // 安卓软键盘收起会改变布局视口并打断进行中的平滑滚动：先收键盘，再分次补滚（已到位时补滚为无操作）
+    (document.activeElement as HTMLElement|null)?.blur?.();
+    const behavior:ScrollBehavior=window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
+    const go=()=>el.scrollIntoView({behavior,block:'start'});
+    go();setTimeout(go,350);setTimeout(go,900);};
   const commit=(next:Receipt,animate=true)=>{userChanged.current=true;setReceipt(next);if(!next.example)setHistory(prev=>remember(prev,next));if(animate){lock.current=true;setPrinting(true);setPrintKey(k=>k+1);clearTimeout(timer.current);timer.current=setTimeout(()=>{lock.current=false;setPrinting(false);setStatus('今日已结算，小票请收好。');},window.matchMedia('(prefers-reduced-motion: reduce)').matches?10:1800);}};
   const generate=()=>{if(lock.current)return;try{const next=createReceipt(input,style);setError('');commit(next);scrollToReceipt();}catch(e){setError(e instanceof Error?e.message:'没能结算，请再试一次。');inputRef.current?.focus();}};
   const chooseStyle=(next:Style)=>{if(lock.current)return;setStyle(next);commit({...receipt,style:next},false);};
