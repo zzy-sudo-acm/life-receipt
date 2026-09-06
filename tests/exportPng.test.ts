@@ -11,12 +11,12 @@ test('折行按宽度截断并保留显式换行', () => {
   assert.deepEqual(wrapText('abc', 9999, 15, measure), ['abc']);
 });
 test('普通小票高度覆盖全部内容，双倍清晰度导出', () => {
-  const spec = layoutReceipt(createReceipt('喝了三杯咖啡；看到晚霞', 'gentle'), measure);
+  const spec = layoutReceipt(createReceipt('喝了三杯咖啡；看到晚霞', 'gentle', () => 0.99), measure);
   assert.equal(spec.scale, 2);
   assert.ok(spec.contentBottom <= spec.height - 8, `content ${spec.contentBottom} within ${spec.height}`);
 });
 test('30 条超长商品名小票不裁切、不糊', () => {
-  const receipt = createReceipt(Array.from({ length: 30 }, (_, i) => `第${i + 1}件小事`).join('；'), 'absurd');
+  const receipt = createReceipt(Array.from({ length: 30 }, (_, i) => `第${i + 1}件小事`).join('；'), 'absurd', () => 0.99);
   receipt.items = receipt.items.map(i => ({ ...i, customName: '长'.repeat(200) }));
   const spec = layoutReceipt(receipt, measure);
   assert.ok(spec.contentBottom <= spec.height - 8, `content ${spec.contentBottom} within ${spec.height}`);

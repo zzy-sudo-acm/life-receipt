@@ -4,7 +4,7 @@ export type Saved = { history: Receipt[]; draft: string; current?: Receipt };
 function validReceipt(value: unknown): value is Receipt {
   if (!value || typeof value !== 'object') return false;
   const r=value as Receipt;
-  return typeof r.id==='string' && r.id.length<100 && typeof r.date==='string' && Number.isFinite(Date.parse(r.date)) && typeof r.input==='string' && r.input.length<=2000 && styles.some(s=>s.id===r.style) && Array.isArray(r.items) && r.items.length>0 && r.items.length<=30 && r.items.every(i=>i && typeof i.id==='string' && typeof i.raw==='string' && i.raw.length<=2000 && typeof i.rule==='string' && Number.isInteger(i.quantity) && i.quantity>=1 && i.quantity<=99 && Number.isInteger(i.unit) && Math.abs(i.unit)<=100 && (i.customName===undefined || typeof i.customName==='string' && i.customName.length<=200));
+  return typeof r.id==='string' && r.id.length<100 && typeof r.date==='string' && Number.isFinite(Date.parse(r.date)) && typeof r.input==='string' && r.input.length<=2000 && styles.some(s=>s.id===r.style) && Array.isArray(r.items) && r.items.length>0 && r.items.length<=30 && r.items.every(i=>i && typeof i.id==='string' && typeof i.raw==='string' && i.raw.length<=2000 && typeof i.rule==='string' && Number.isInteger(i.quantity) && i.quantity>=1 && i.quantity<=99 && Number.isInteger(i.unit) && Math.abs(i.unit)<=100 && (i.variant===undefined || i.variant===0 || i.variant===1) && (i.customName===undefined || typeof i.customName==='string' && i.customName.length<=200));
 }
 export function readSaved(): { data: Saved; warning: string } {
   try {

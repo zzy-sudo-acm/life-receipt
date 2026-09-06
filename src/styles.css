@@ -8,3 +8,6 @@
 @media(max-width:760px){.receipt-grid{font-size:11px}.column-label{font-size:10px}.sum-row,.cashier{font-size:11px}.receipt-meta{font-size:8px}}
 .balance{padding-bottom:28px}.balance .stamp{bottom:0;left:0;right:auto;transform:rotate(-7deg);font-size:11px;padding:4px 7px}.balance strong{font-size:42px}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.output-side{scroll-margin-top:12px}
+.examples-hint{margin:8px 2px 0;font-size:11px;color:var(--muted);letter-spacing:.3px}
+@media(max-width:760px){.examples-hint{font-size:10px}}

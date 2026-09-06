@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseInput, totals, itemName, styles, examples, message, rules, type Receipt } from '../src/engine.ts';
-test('同一事实三种文案，电量与数量不变',()=>{const items=parseInput(examples[0].text);assert.deepEqual(items.map(i=>i.quantity),[3,1,1,1]);assert.deepEqual(totals(items),{income:35,expense:-45,balance:90});assert.equal(new Set(styles.map(s=>itemName(items[0],s.id))).size,3);});
+import { parseInput, totals, itemName, styles, examples, message, rules, pickExample, createReceipt, verdict, type Receipt } from '../src/engine.ts';
+test('同一事实三种文案，电量与数量不变',()=>{const items=parseInput('开了3场会议；喝了1杯咖啡；挤地铁回家；看到了下班晚霞');assert.deepEqual(items.map(i=>i.quantity),[3,1,1,1]);assert.deepEqual(totals(items),{income:35,expense:-45,balance:90});assert.equal(new Set(styles.map(s=>itemName(items[0],s.id))).size,3);});
 test('中文数量与单件费用相乘',()=>{const items=parseInput('开了三场会议；喝了两杯咖啡');assert.equal(items[0].quantity,3);assert.equal(items[1].quantity,2);assert.equal(totals(items).balance,100);});
 test('未知及否定内容保留原话，不编造事件',()=>{for(const input of ['观察了窗台上的一颗石头','没有喝咖啡','今天没去跑步','开会，然后和朋友吃饭']){const [item]=parseInput(input);assert.equal(item.unit,0);assert.equal(itemName(item,'gentle'),input);}});
 test('空输入、超长、过多事件与过大数量明确拒绝',()=>{for(const input of ['', '；；！', '字'.repeat(2001),Array(31).fill('小事').join(';'),'喝了100杯咖啡'])assert.throws(()=>parseInput(input));});
@@ -15,3 +15,9 @@ test('编辑数量与单件电量后重新结算一致',()=>{const items=parseIn
 test('规则表完整：三风格文案齐全且ID唯一',()=>{const ids=new Set();for(const r of rules){assert.ok(!ids.has(r.id),r.id);ids.add(r.id);assert.equal(new Set(r.names).size,3,r.id);r.notes.forEach(n=>assert.ok(n.length>=4,r.id));assert.ok(Math.abs(r.unit)<=100&&r.unit!==0,r.id);}});
 test('身体不适时留言优先安抚',()=>{const r={id:'test',date:new Date().toISOString(),style:'gentle',input:'看到晚霞；感冒了',items:parseInput('看到晚霞；感冒了')} as Receipt;assert.match(message(r),/身体/);});
 test('易混词不误判：蚂蚁搬家不是搬家',()=>{const [item]=parseInput('观察了一下午蚂蚁搬家');assert.equal(item.rule,'unknown');assert.equal(item.unit,0);});
+test('示例按钮随机凑一天：四条不重复且来自事件池',()=>{for(const example of examples){const text=pickExample(example.pool,4,()=>0);const parts=text.split('；');assert.equal(parts.length,4);assert.equal(new Set(parts).size,4);for(const p of parts)assert.ok(example.pool.includes(p));}});
+test('联动菜单：特定组合触发隐藏商品',()=>{const items=parseInput('加班到深夜；喝了咖啡');const combo=items.find(i=>i.rule.startsWith('combo-'));assert.ok(combo,'应触发咖啡×加班联动');assert.equal(combo.quantity,1);assert.equal(totals(items).balance,100-25+15+combo.unit);assert.ok(parseInput('开了3场会议；喝了1杯咖啡；挤地铁回家；看到了下班晚霞').every(i=>!i.rule.startsWith('combo-')),'示例原文不应触发联动');});
+test('随机彩蛋由随机数决定',()=>{const noEgg=createReceipt('喝了咖啡','gentle',()=>0.99);assert.equal(noEgg.items.length,1);const withEgg=createReceipt('喝了咖啡','gentle',()=>0);assert.equal(withEgg.items.length,2);assert.ok(withEgg.items[1].rule.startsWith('egg-'));assert.ok(withEgg.items[1].unit>0);});
+test('余额评级印章分档',()=>{assert.equal(verdict(150),'电量溢出');assert.equal(verdict(110),'满血续航');assert.equal(verdict(80),'稳定营业');assert.equal(verdict(40),'略有亏空');assert.equal(verdict(0),'电量告急');assert.equal(verdict(-1),'透支人生');});
+test('热门规则双套文案：变体不同名，选定后稳定',()=>{const base=parseInput('开了个会')[0];assert.ok(rules.find(r=>r.id==='meeting')?.altNames);const a=itemName({...base,variant:0},'gentle');const b=itemName({...base,variant:1},'gentle');assert.notEqual(a,b);assert.equal(itemName(base,'snark'),itemName(base,'snark'));});
+test('留言按小票种子确定，同票多次一致',()=>{const items=parseInput('喝了咖啡；看到晚霞');const r={id:'LP-TEST-AAAAAA',date:new Date().toISOString(),style:'gentle',input:'',items} as Receipt;const first=message(r);assert.equal(message(r),first);const allowed=[...rules.filter(x=>x.id==='coffee'||x.id==='sunset')].flatMap(x=>x.notes);assert.ok(allowed.includes(first));});

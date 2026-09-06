@@ -1,4 +1,4 @@
-import { formatDate, itemName, message, signed, styles, totals, type Receipt } from './engine.ts';
+import { formatDate, itemName, message, signed, styles, totals, verdict, type Receipt } from './engine.ts';
 const FONT='"Noto Sans Mono CJK SC", "Microsoft YaHei", "PingFang SC", monospace';
 const WIDTH=420, PAD=32, ROW=24, GAP=8, MAX_CANVAS=16000;
 export type Measure=(text:string,size:number)=>number;
@@ -34,7 +34,7 @@ export async function exportPng(receipt: Receipt): Promise<void> {
   let y=209;for(const {i,lines} of rows){lines.forEach((line,n)=>text(line,pad,y+n*24,15));text(`×${i.quantity}`,302,y,14,false,'right');text(signed(i.unit*i.quantity),right,y,14,false,'right');y+=lines.length*24+8;}dash(y);y+=26;
   const total=totals(receipt.items);for(const [label,value] of [['初始电量','100'],['今日收入',signed(total.income)],['今日支出',String(total.expense)]]){text(label,pad,y);text(value,right,y,15,false,'right');y+=25;}
   text('当前电量余额',pad,y+10,16,true);text(String(total.balance),right,y+51,43,true,'right');
-  ctx.save();ctx.translate(pad+130,y+35);ctx.rotate(-.16);ctx.strokeStyle='#c05b37';ctx.fillStyle='#c05b37';ctx.lineWidth=2;ctx.strokeRect(-4,-20,105,29);ctx.font=`bold 15px ${FONT}`;ctx.textAlign='left';ctx.fillText('今日已结算',1,0);ctx.restore();y+=77;dash(y);y+=26;
+  ctx.save();ctx.translate(pad+130,y+35);ctx.rotate(-.16);ctx.strokeStyle='#c05b37';ctx.fillStyle='#c05b37';ctx.lineWidth=2;ctx.strokeRect(-4,-20,105,29);ctx.font=`bold 15px ${FONT}`;ctx.textAlign='left';ctx.fillText(verdict(total.balance),1,0);ctx.restore();y+=77;dash(y);y+=26;
   text('收银员说：',pad,y);y+=25;quote.forEach(line=>{text(line,pad,y);y+=24;});dash(y-7);y+=19;
   text(formatDate(receipt.date),pad,y,11);text('虚构流水号',right,y,10,false,'right');y+=21;text(receipt.id,width/2,y,11,false,'center');y+=15;
   ctx.fillStyle='#38362f';for(let x=pad;x<right;x+=5){const n=receipt.id.charCodeAt(Math.floor(x/5)%receipt.id.length);ctx.fillRect(x,y,1+n%3,36);}y+=57;
